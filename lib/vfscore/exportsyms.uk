@@ -76,6 +76,8 @@ uk_syscall_e_chdir
 uk_syscall_r_chdir
 fstatat
 statfs
+uk_syscall_e_statfs
+uk_syscall_r_statfs
 lstat
 uk_syscall_e_lstat
 uk_syscall_r_lstat
@@ -105,6 +107,8 @@ preadv
 uk_syscall_e_preadv
 uk_syscall_r_preadv
 ioctl
+uk_syscall_e_ioctl
+uk_syscall_r_ioctl
 fdatasync
 uk_syscall_e_fdatasync
 uk_syscall_r_fdatasync
@@ -157,6 +161,8 @@ fcntl
 readdir_r
 readdir64_r
 fstatfs
+uk_syscall_e_fstatfs
+uk_syscall_r_fstatfs
 eaccess
 euidaccess
 rename
