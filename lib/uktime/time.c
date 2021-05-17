@@ -123,6 +123,16 @@ unsigned int sleep(unsigned int seconds)
 	return 0;
 }
 
+UK_SYSCALL_R_DEFINE(time_t, time, time_t *, tloc)
+{
+	time_t secs = ukarch_time_nsec_to_sec(ukplat_wall_clock());
+
+	if (tloc)
+		*tloc = secs;
+
+	return secs;
+}
+
 UK_SYSCALL_R_DEFINE(int, gettimeofday, struct timeval *, tv, void *, tz)
 {
 	__nsec now = ukplat_wall_clock();
@@ -176,15 +186,14 @@ int clock_settime(clockid_t clk_id __unused, const struct timespec *tp __unused)
 	return 0;
 }
 
-int times(struct tm *buf __unused)
+UK_SYSCALL_R_DEFINE(int, times, struct tm *, buf)
 {
-	errno = ENOTSUP;
-	return -1;
+	return -ENOTSUP;
 }
 
 int setitimer(int which __unused, const struct itimerval *new_value __unused,
 		struct itimerval *old_value __unused)
 {
-	WARN_STUBBED();
+	UK_WARN_STUBBED();
 	return 0;
 }

@@ -108,22 +108,37 @@ int seteuid(uid_t euid __unused)
 	return 0;
 }
 
-int getresuid(uid_t *ruid __unused, uid_t *euid __unused, uid_t *suid __unused)
+UK_SYSCALL_R_DEFINE(int, getresuid, uid_t*, ruid, uid_t*, euid, uid_t*, suid)
 {
 	return 0;
 }
 
-int setresuid(uid_t ruid __unused, uid_t euid __unused, uid_t suid __unused)
+UK_SYSCALL_R_DEFINE(int, setresuid, uid_t, ruid, uid_t, euid, uid_t, suid)
 {
 	return 0;
 }
 
-int setreuid(uid_t ruid __unused, uid_t euid __unused)
+UK_SYSCALL_R_DEFINE(int, setreuid, uid_t, ruid, uid_t, euid)
+{
+	return 0;
+}
+
+UK_SYSCALL_R_DEFINE(int, setfsgid, uid_t, fsgid)
+{
+	return 0;
+}
+
+UK_SYSCALL_R_DEFINE(int, setfsuid, uid_t, fsuid)
 {
 	return 0;
 }
 
 UK_SYSCALL_R_DEFINE(int, capset, void*, hdrp, void*, datap)
+{
+	return 0;
+}
+
+UK_SYSCALL_R_DEFINE(int, capget, void*, hdrp, void*, datap)
 {
 	return 0;
 }
@@ -199,7 +214,7 @@ UK_SYSCALL_R_DEFINE(gid_t, getgid)
 	return 0;
 }
 
-int setgid(gid_t gid __unused)
+UK_SYSCALL_R_DEFINE(int, setgid, gid_t, gid)
 {
 	return 0;
 }
@@ -219,11 +234,10 @@ int setegid(gid_t egid __unused)
 	return 0;
 }
 
-int getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid)
+UK_SYSCALL_R_DEFINE(int, getresgid, gid_t*, rgid, gid_t*, egid, gid_t*, sgid)
 {
 	if (!rgid || !egid || !sgid) {
-		errno = EFAULT;
-		return -1;
+		return -EFAULT;
 	}
 
 	*rgid = *egid = *sgid = UK_DEFAULT_GID;
@@ -231,19 +245,18 @@ int getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid)
 	return 0;
 }
 
-int setresgid(gid_t rgid, gid_t egid, gid_t sgid)
+UK_SYSCALL_R_DEFINE(int, setresgid, gid_t, rgid, gid_t, egid, gid_t, sgid)
 {
 	/* We allow only UK_DEFAULT_GID */
 	if (rgid != UK_DEFAULT_GID || egid != UK_DEFAULT_GID ||
 			sgid != UK_DEFAULT_GID) {
-		errno = EINVAL;
-		return -1;
+		return -EINVAL;
 	}
 
 	return 0;
 }
 
-int setregid(gid_t rgid __unused, gid_t egid __unused)
+UK_SYSCALL_R_DEFINE(int, setregid, gid_t, rgid, gid_t, egid)
 {
 	return 0;
 }
@@ -253,12 +266,12 @@ int initgroups(const char *user __unused, gid_t group __unused)
 	return 0;
 }
 
-int getgroups(int size __unused, gid_t list[] __unused)
+UK_SYSCALL_R_DEFINE(int, getgroups, int, size, gid_t*, list)
 {
 	return 0;
 }
 
-int setgroups(size_t size __unused, const gid_t *list __unused)
+UK_SYSCALL_R_DEFINE(int, setgroups, size_t, size, const gid_t*, list)
 {
 	return 0;
 }

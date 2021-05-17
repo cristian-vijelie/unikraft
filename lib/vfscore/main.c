@@ -47,6 +47,7 @@
 #include <vfscore/file.h>
 #include <vfscore/mount.h>
 #include <vfscore/fs.h>
+#include <uk/print.h>
 #include <uk/errptr.h>
 #include <uk/ctors.h>
 #include <uk/trace.h>
@@ -644,20 +645,16 @@ UK_TRACEPOINT(trace_vfs_ioctl, "%d 0x%x", int, unsigned long);
 UK_TRACEPOINT(trace_vfs_ioctl_ret, "");
 UK_TRACEPOINT(trace_vfs_ioctl_err, "%d", int);
 
-int ioctl(int fd, unsigned long int request, ...)
+UK_LLSYSCALL_R_DEFINE(int, ioctl, int, fd, unsigned long int, request,
+		void*, arg)
 {
 	struct vfscore_file *fp;
 	int error;
-	va_list ap;
-	void* arg;
 
 	trace_vfs_ioctl(fd, request);
 	/* glibc ABI provides a variadic prototype for ioctl so we need to agree
 	 * with it, since we now include sys/ioctl.h
 	 * read the first argument and pass it to sys_ioctl() */
-	va_start(ap, request);
-	arg = va_arg(ap, void*);
-	va_end(ap);
 
 	error = fget(fd, &fp);
 	if (error)
@@ -671,11 +668,24 @@ int ioctl(int fd, unsigned long int request, ...)
 	trace_vfs_ioctl_ret();
 	return 0;
 
-	out_errno:
+out_errno:
 	trace_vfs_ioctl_err(error);
-	errno = error;
-	return -1;
+	return -error;
 }
+
+#if UK_LIBC_SYSCALLS
+int ioctl(int fd, unsigned long int request, ...)
+{
+	va_list ap;
+	void *arg;
+
+	va_start(ap, request);
+	arg = va_arg(ap, void*);
+	va_end(ap);
+
+	return uk_syscall_e_ioctl(fd, request, arg);
+}
+#endif
 
 UK_TRACEPOINT(trace_vfs_fsync, "%d", int);
 UK_TRACEPOINT(trace_vfs_fsync_ret, "");
@@ -1048,8 +1058,7 @@ UK_TRACEPOINT(trace_vfs_mkdir, "\"%s\" 0%0o", const char*, mode_t);
 UK_TRACEPOINT(trace_vfs_mkdir_ret, "");
 UK_TRACEPOINT(trace_vfs_mkdir_err, "%d", int);
 
-int
-mkdir(const char *pathname, mode_t mode)
+UK_SYSCALL_R_DEFINE(int, mkdir, const char*, pathname, mode_t, mode)
 {
 	struct task *t = main_task;
 	char path[PATH_MAX];
@@ -1066,10 +1075,9 @@ mkdir(const char *pathname, mode_t mode)
 		goto out_errno;
 	trace_vfs_mkdir_ret();
 	return 0;
-	out_errno:
+out_errno:
 	trace_vfs_mkdir_err(error);
-	errno = error;
-	return -1;
+	return -error;
 }
 
 UK_TRACEPOINT(trace_vfs_rmdir, "\"%s\"", const char*);
@@ -1299,7 +1307,7 @@ UK_TRACEPOINT(trace_vfs_symlink, "oldpath=%s, newpath=%s", const char*,
 UK_TRACEPOINT(trace_vfs_symlink_ret, "");
 UK_TRACEPOINT(trace_vfs_symlink_err, "errno=%d", int);
 
-int symlink(const char *oldpath, const char *newpath)
+UK_SYSCALL_R_DEFINE(int, symlink, const char*, oldpath, const char*, newpath)
 {
 	int error;
 
@@ -1307,16 +1315,14 @@ int symlink(const char *oldpath, const char *newpath)
 
 	error = ENOENT;
 	if (oldpath == NULL || newpath == NULL) {
-		errno = ENOENT;
 		trace_vfs_symlink_err(error);
-		return (-1);
+		return (-ENOENT);
 	}
 
 	error = sys_symlink(oldpath, newpath);
 	if (error) {
-		errno = error;
 		trace_vfs_symlink_err(error);
-		return (-1);
+		return (-error);
 	}
 
 	trace_vfs_symlink_ret();
@@ -1327,7 +1333,7 @@ UK_TRACEPOINT(trace_vfs_unlink, "\"%s\"", const char*);
 UK_TRACEPOINT(trace_vfs_unlink_ret, "");
 UK_TRACEPOINT(trace_vfs_unlink_err, "%d", int);
 
-int unlink(const char *pathname)
+UK_SYSCALL_R_DEFINE(int, unlink, const char*, pathname)
 {
 	trace_vfs_unlink(pathname);
 	struct task *t = main_task;
@@ -1345,10 +1351,9 @@ int unlink(const char *pathname)
 		goto out_errno;
 	trace_vfs_unlink_ret();
 	return 0;
-	out_errno:
+out_errno:
 	trace_vfs_unlink_err(error);
-	errno = error;
-	return -1;
+	return -error;
 }
 
 UK_TRACEPOINT(trace_vfs_stat, "\"%s\" %p", const char*, struct stat*);
@@ -1381,11 +1386,10 @@ int __xstat(int ver __unused, const char *pathname, struct stat *st)
 
 LFS64(__xstat);
 
-int stat(const char *pathname, struct stat *st)
+UK_SYSCALL_R_DEFINE(int, stat, const char*, pathname, struct stat*, st)
 {
 	if (!pathname) {
-		errno = EINVAL;
-		return -1;
+		return -EINVAL;
 	}
 	return __xstat(1, pathname, st);
 }
@@ -1452,12 +1456,16 @@ int __statfs(const char *pathname, struct statfs *buf)
 		goto out_errno;
 	trace_vfs_statfs_ret();
 	return 0;
-	out_errno:
+
+out_errno:
 	trace_vfs_statfs_err(error);
-	errno = error;
-	return -1;
+	return -error;
 }
-__weak_alias(__statfs, statfs);
+
+UK_SYSCALL_R_DEFINE(int, statfs, const char*, pathname, struct statfs*, buf)
+{
+	return __statfs(pathname, buf);
+}
 
 LFS64(statfs);
 
@@ -1483,12 +1491,15 @@ int __fstatfs(int fd, struct statfs *buf)
 	trace_vfs_fstatfs_ret();
 	return 0;
 
-	out_errno:
+out_errno:
 	trace_vfs_fstatfs_err(error);
-	errno = error;
-	return -1;
+	return -error;
 }
-__weak_alias(__fstatfs, fstatfs);
+
+UK_SYSCALL_R_DEFINE(int, fstatfs, int, fd, struct statfs*, buf)
+{
+	return __fstatfs(fd, buf);
+}
 
 LFS64(fstatfs);
 
@@ -2213,23 +2224,23 @@ UK_SYSCALL_R_DEFINE(int, fchmod, int, fd, mode_t, mode)
 UK_TRACEPOINT(trace_vfs_fchown, "\"%d\" %d %d", int, uid_t, gid_t);
 UK_TRACEPOINT(trace_vfs_fchown_ret, "");
 
-int fchown(int fd __unused, uid_t owner __unused, gid_t group __unused)
+UK_SYSCALL_R_DEFINE(int, fchown, int, fd, uid_t, owner, gid_t, group)
 {
 	trace_vfs_fchown(fd, owner, group);
-	WARN_STUBBED();
+	UK_WARN_STUBBED();
 	trace_vfs_fchown_ret();
 	return 0;
 }
 
-int chown(const char *path __unused, uid_t owner __unused, gid_t group __unused)
+UK_SYSCALL_R_DEFINE(int, chown, const char*, path, uid_t, owner, gid_t, group)
 {
-	WARN_STUBBED();
+	UK_WARN_STUBBED();
 	return 0;
 }
 
-int lchown(const char *path __unused, uid_t owner __unused, gid_t group __unused)
+UK_SYSCALL_R_DEFINE(int, lchown, const char*, path, uid_t, owner, gid_t, group)
 {
-	WARN_STUBBED();
+	UK_WARN_STUBBED();
 	return 0;
 }
 
@@ -2345,7 +2356,7 @@ fs_noop(void)
 
 int chroot(const char *path __unused)
 {
-	WARN_STUBBED();
+	UK_WARN_STUBBED();
 	errno = ENOSYS;
 	return -1;
 }

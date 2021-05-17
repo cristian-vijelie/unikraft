@@ -256,8 +256,7 @@ vfscore_release_mp_dentries(struct mount *mp)
 	drele(mp->m_root);
 }
 
-int
-umount2(const char *path, int flags)
+UK_SYSCALL_R_DEFINE(int, umount2, const char*, path, int, flags)
 {
 	struct mount *mp, *tmp;
 	int error, pathlen;
@@ -380,7 +379,7 @@ UK_LLSYSCALL_R_DEFINE(int, sync)
 	uk_mutex_unlock(&mount_lock);
 }
 
-#if UK_LIBC_SYSCALL
+#if UK_LIBC_SYSCALLS
 void sync(void)
 {
    uk_syscall_e_sync();

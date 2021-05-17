@@ -2,7 +2,7 @@
 /*
  * Authors: Costin Lupu <costin.lupu@cs.pub.ro>
  *
- * Copyright (c) 2019, University Politehnica of Bucharest. All rights reserved.
+ * Copyright (c) 2020, University Politehnica of Bucharest. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,49 +30,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <errno.h>
-#include <time.h>
-#include <uk/essentials.h>
-#include <uk/print.h>
+#ifndef __NETFRONT_XB_H__
+#define __NETFRONT_XB_H__
 
+#include "netfront.h"
 
-int timer_create(clockid_t clockid __unused,
-		struct sigevent *__restrict sevp __unused,
-		timer_t *__restrict timerid __unused)
-{
-	UK_WARN_STUBBED();
-	errno = ENOTSUP;
-	return -1;
-}
+int  netfront_xb_init(struct netfront_dev *netdev, struct uk_alloc *a);
+void netfront_xb_fini(struct netfront_dev *netdev, struct uk_alloc *a);
 
-int timer_delete(timer_t timerid __unused)
-{
-	UK_WARN_STUBBED();
-	errno = ENOTSUP;
-	return -1;
-}
+int netfront_xb_connect(struct netfront_dev *netdev);
+int netfront_xb_disconnect(struct netfront_dev *netdev);
 
-int timer_settime(timer_t timerid __unused,
-		int flags __unused,
-		const struct itimerspec *__restrict new_value __unused,
-		struct itimerspec *__restrict old_value __unused)
-{
-	UK_WARN_STUBBED();
-	errno = ENOTSUP;
-	return -1;
-}
-
-int timer_gettime(timer_t timerid __unused,
-		struct itimerspec *curr_value __unused)
-{
-	UK_WARN_STUBBED();
-	errno = ENOTSUP;
-	return -1;
-}
-
-int timer_getoverrun(timer_t timerid __unused)
-{
-	UK_WARN_STUBBED();
-	errno = ENOTSUP;
-	return -1;
-}
+#endif /* __NETFRONT_XB_H__ */
