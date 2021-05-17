@@ -26,6 +26,8 @@ read
 uk_syscall_e_read
 uk_syscall_r_read
 mkdir
+uk_syscall_e_mkdir
+uk_syscall_r_mkdir
 fsync
 uk_syscall_e_fsync
 uk_syscall_r_fsync
@@ -42,6 +44,8 @@ ftruncate
 uk_syscall_e_ftruncate
 uk_syscall_r_ftruncate
 stat
+uk_syscall_e_stat
+uk_syscall_r_stat
 chmod
 uk_syscall_e_chmod
 uk_syscall_r_chmod
@@ -49,6 +53,8 @@ fchmod
 uk_syscall_e_fchmod
 uk_syscall_r_fchmod
 fchown
+uk_syscall_e_fchown
+uk_syscall_r_fchown
 dup
 dup2
 uk_syscall_e_dup2
@@ -62,14 +68,20 @@ uk_syscall_r_sync
 vfscore_mount_dump
 umount
 umount2
+uk_syscall_e_umount2
+uk_syscall_r_umount2
 link
 uk_syscall_e_link
 uk_syscall_r_link
 unlink
+uk_syscall_e_unlink
+uk_syscall_r_unlink
 getcwd
 uk_syscall_e_getcwd
 uk_syscall_r_getcwd
 chown
+uk_syscall_e_chown
+uk_syscall_r_chown
 chroot
 chdir
 uk_syscall_e_chdir
@@ -82,6 +94,8 @@ lstat
 uk_syscall_e_lstat
 uk_syscall_r_lstat
 lchown
+uk_syscall_e_lchown
+uk_syscall_r_lchown
 openat
 opendir
 readdir
@@ -124,6 +138,8 @@ fchdir
 uk_syscall_e_fchdir
 uk_syscall_r_fchdir
 symlink
+uk_syscall_e_symlink
+uk_syscall_r_symlink
 statvfs
 fstatvfs
 access
@@ -183,6 +199,8 @@ vn_unlock
 vfs_busy
 pipe
 pipe2
+uk_syscall_e_pipe2
+uk_syscall_r_pipe2
 mkfifo
 futimes
 uk_syscall_e_futimesat
