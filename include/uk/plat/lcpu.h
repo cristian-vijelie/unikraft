@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
  * Authors: Simon Kuenzer <simon.kuenzer@neclab.eu>
- *
+ *          Cristian Vijelie <cristianvijelie@gmail.com>
  *
  * Copyright (c) 2017, NEC Europe Ltd., NEC Corporation. All rights reserved.
  *
@@ -35,17 +35,10 @@
 #define __UKPLAT_LCPU_H__
 
 #include <uk/arch/time.h>
+#include <uk/essentials.h>
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#if UKPLAT_LCPU_MULTICORE
-__u8 ukplat_lcpu_id(void);
-__u8 ukplat_lcpu_count(void);
-#else
-#define ukplat_lcpu_id()    (0)
-#define ukplat_lcpu_count() (1)
 #endif
 
 /**
@@ -96,6 +89,51 @@ void ukplat_lcpu_halt_to(__snsec until);
  * Execution is returned when an interrupt/signal arrived
  */
 void ukplat_lcpu_halt_irq(void);
+
+#ifdef CONFIG_HAVE_SMP
+typedef void (*ukplat_lcpu_entry_t)(void) __noreturn;
+typedef __u32 __lcpuid;
+
+enum lcpu_states {offline, running, idle, waiting };
+
+struct ukplat_cpu {
+	ukplat_lcpu_entry_t entry;
+	void *stackp;
+	enum lcpu_states state;
+};
+
+/**
+ * Starts multiple logical CPUs
+ * @param lcpuid array with the ids of the cores that are to be started
+ * @param sp array of stack pointers - provide a stack for each core
+ * @param entry array of function pointers - the entry for each core
+ * @param num number of cores that are to be started
+ * @return number of cores that have started
+ */
+int ukplat_lcpu_start(__lcpuid lcpuid[], void *sp[],
+		      ukplat_lcpu_entry_t entry[], int num);
+
+/**
+ * Return the (physical) ID of the current logical CPU
+ */
+__lcpuid ukplat_lcpu_id(void);
+
+/**
+ * Return the number of logical CPUs present on the system
+ */
+__lcpuid ukplat_lcpu_count(void);
+
+/**
+ * Return whether the current logical CPU is the Bootstrapping one
+ */
+int ukplat_lcpu_is_bsp(void);
+
+int ukplat_lcpu_wait(__lcpuid lcpuid[], int num, __nsec timeout);
+
+#else
+#define ukplat_lcpu_id() (0)
+#define ukplat_lcpu_count() (1)
+#endif /* CONFIG_HAVE_SMP */
 
 #ifdef __cplusplus
 }
